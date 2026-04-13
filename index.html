@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdInsight-BusinessDashboard | CowManager</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #06d6a0;
+            --secondary: #118ab2;
+            --accent: #ffd166;
+            --warning: #f77f00;
+            --success: #06d6a0;
+            --danger: #ef476f;
+            --bg-dark: #03071e;
+            --bg-card: #0a1128;
+            --bg-elevated: #121d3e;
+            --text-primary: #edf6f9;
+            --text-secondary: #83c5be;
+            --text-muted: #456268;
+            --border: #1a2d50;
+            --herd-gradient: linear-gradient(135deg, #06d6a0 0%, #118ab2 50%, #ffd166 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 20% 80%, rgba(6,214,160,0.07) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(17,138,178,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255,209,102,0.03) 0%, transparent 60%);
+        }
+        .header {
+            background: linear-gradient(180deg, rgba(6,214,160,0.04) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 2rem;
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+        .header-content {
+            max-width: 1800px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { display: flex; align-items: center; gap: 0.75rem; }
+        .logo-icon {
+            width: 46px; height: 46px; background: var(--herd-gradient);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; position: relative;
+        }
+        .logo-icon::after {
+            content: ''; position: absolute; inset: -2px; background: var(--herd-gradient);
+            border-radius: 14px; z-index: -1; opacity: 0.5; filter: blur(8px);
+        }
+        .logo-text {
+            font-size: 1.5rem; font-weight: 800;
+            background: var(--herd-gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .logo-subtitle {
+            font-size: 0.6rem; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 3px; font-weight: 500;
+        }
+        .header-badges { display: flex; gap: 0.4rem; }
+        .badge {
+            background: var(--bg-card); border: 1px solid var(--border);
+            padding: 0.35rem 0.7rem; border-radius: 6px;
+            font-size: 0.65rem; color: var(--text-secondary);
+            font-family: 'Space Mono', monospace;
+        }
+        .badge.live {
+            background: rgba(6,214,160,0.15); border-color: var(--primary); color: var(--primary);
+        }
+        .badge.live::before {
+            content: ''; display: inline-block; width: 6px; height: 6px;
+            background: var(--primary); border-radius: 50%; margin-right: 5px;
+            animation: livePulse 1.5s ease-in-out infinite;
+        }
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+        }
+
+        .main { max-width: 1800px; margin: 0 auto; padding: 1.5rem 2rem; }
+        .hero { text-align: center; margin-bottom: 1.5rem; }
+        .hero h1 {
+            font-size: 2.2rem; font-weight: 900; margin-bottom: 0.4rem;
+            background: var(--herd-gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p { color: var(--text-secondary); font-size: 0.95rem; }
+
+        /* Metrics Row */
+        .metrics-row {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 1rem; margin-bottom: 1.25rem;
+        }
+        .metric-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 1.25rem; position: relative; overflow: hidden;
+        }
+        .metric-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        }
+        .metric-card:nth-child(1)::before { background: var(--primary); }
+        .metric-card:nth-child(2)::before { background: var(--secondary); }
+        .metric-card:nth-child(3)::before { background: var(--accent); }
+        .metric-card:nth-child(4)::before { background: var(--danger); }
+        .metric-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .metric-label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-muted); margin-bottom: 0.3rem; font-weight: 600;
+        }
+        .metric-value {
+            font-size: 1.8rem; font-weight: 800;
+            font-family: 'Space Mono', monospace;
+        }
+        .metric-delta {
+            font-size: 0.7rem; font-family: 'Space Mono', monospace; margin-top: 0.2rem;
+        }
+        .metric-delta.up { color: var(--success); }
+        .metric-delta.down { color: var(--danger); }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid; grid-template-columns: 1fr 1fr 380px;
+            gap: 1.25rem;
+        }
+        @media (max-width: 1400px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .metrics-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; overflow: hidden;
+        }
+        .card-header {
+            padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(180deg, rgba(18,29,62,0.6) 0%, transparent 100%);
+        }
+        .card-title {
+            font-size: 0.9rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .card-body { padding: 1.25rem; }
+
+        /* Adoption Map */
+        .adoption-map {
+            display: grid; grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+        .region-cell {
+            background: var(--bg-elevated); border-radius: 10px;
+            padding: 0.75rem 0.5rem; text-align: center;
+            border: 1px solid var(--border); cursor: pointer;
+            transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .region-cell:hover { transform: translateY(-2px); border-color: var(--primary); }
+        .region-flag { font-size: 1.5rem; margin-bottom: 0.3rem; }
+        .region-name { font-size: 0.65rem; font-weight: 600; margin-bottom: 0.2rem; }
+        .region-sensors {
+            font-size: 0.9rem; font-weight: 800;
+            font-family: 'Space Mono', monospace; color: var(--primary);
+        }
+        .region-growth {
+            font-size: 0.6rem; font-family: 'Space Mono', monospace;
+            margin-top: 0.15rem;
+        }
+        .region-growth.up { color: var(--success); }
+        .region-growth.down { color: var(--danger); }
+        .region-bar {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 3px; background: var(--primary); opacity: 0.6;
+        }
+
+        /* Alert Accuracy Chart */
+        .accuracy-bars {
+            display: flex; flex-direction: column; gap: 0.6rem;
+        }
+        .accuracy-row {
+            display: flex; align-items: center; gap: 0.75rem;
+        }
+        .accuracy-label {
+            width: 100px; font-size: 0.72rem; font-weight: 600;
+            flex-shrink: 0;
+        }
+        .accuracy-track {
+            flex: 1; height: 28px; background: var(--bg-dark);
+            border-radius: 6px; overflow: hidden; position: relative;
+        }
+        .accuracy-fill {
+            height: 100%; border-radius: 6px;
+            display: flex; align-items: center; justify-content: flex-end;
+            padding-right: 8px; font-size: 0.65rem; font-weight: 700;
+            font-family: 'Space Mono', monospace; color: white;
+            transition: width 0.8s ease;
+        }
+        .accuracy-fill.health { background: linear-gradient(90deg, rgba(6,214,160,0.6), var(--primary)); }
+        .accuracy-fill.fertility { background: linear-gradient(90deg, rgba(17,138,178,0.6), var(--secondary)); }
+        .accuracy-fill.nutrition { background: linear-gradient(90deg, rgba(255,209,102,0.6), var(--accent)); color: #333; }
+        .accuracy-fill.transition { background: linear-gradient(90deg, rgba(247,127,0,0.6), var(--warning)); }
+
+        /* Engagement Table */
+        .engagement-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+        .engagement-table th {
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-muted); padding: 0.5rem; text-align: left; font-weight: 600;
+        }
+        .engagement-table td {
+            background: var(--bg-elevated); padding: 0.65rem;
+            font-size: 0.75rem;
+        }
+        .engagement-table tr td:first-child { border-radius: 8px 0 0 8px; }
+        .engagement-table tr td:last-child { border-radius: 0 8px 8px 0; }
+        .farm-name { font-weight: 700; }
+        .farm-size { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--text-secondary); }
+        .usage-bar {
+            width: 80px; height: 6px; background: var(--bg-dark);
+            border-radius: 3px; overflow: hidden;
+        }
+        .usage-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+        .retention-badge {
+            font-family: 'Space Mono', monospace; font-size: 0.7rem;
+            font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px;
+        }
+        .retention-badge.high { background: rgba(6,214,160,0.2); color: var(--success); }
+        .retention-badge.medium { background: rgba(255,209,102,0.2); color: var(--accent); }
+        .retention-badge.low { background: rgba(239,71,111,0.2); color: var(--danger); }
+
+        /* Herd Size Distribution */
+        .distribution-container {
+            display: flex; flex-direction: column; gap: 0.5rem;
+        }
+        .dist-row {
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .dist-label {
+            width: 80px; font-size: 0.7rem; font-weight: 600;
+            text-align: right; flex-shrink: 0;
+        }
+        .dist-bar {
+            flex: 1; height: 32px; background: var(--bg-dark);
+            border-radius: 8px; overflow: hidden; position: relative;
+        }
+        .dist-fill {
+            height: 100%; border-radius: 8px;
+            display: flex; align-items: center; padding-left: 10px;
+            font-size: 0.65rem; font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            transition: width 0.8s ease;
+        }
+        .dist-count {
+            font-size: 0.7rem; font-family: 'Space Mono', monospace;
+            color: var(--text-muted); width: 50px; text-align: right; flex-shrink: 0;
+        }
+
+        /* Churn Indicators */
+        .churn-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;
+        }
+        .churn-card {
+            background: var(--bg-dark); border-radius: 10px;
+            padding: 0.85rem; text-align: center;
+        }
+        .churn-value {
+            font-size: 1.5rem; font-weight: 800;
+            font-family: 'Space Mono', monospace;
+        }
+        .churn-label {
+            font-size: 0.6rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-top: 0.2rem;
+        }
+
+        /* Controls */
+        .controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .control-btn {
+            flex: 1; padding: 0.7rem; background: var(--bg-elevated);
+            border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text-primary); font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center;
+            justify-content: center; gap: 0.4rem;
+        }
+        .control-btn:hover { border-color: var(--primary); background: rgba(6,214,160,0.1); }
+        .control-btn.active { border-color: var(--primary); background: rgba(6,214,160,0.2); color: var(--primary); }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex; gap: 0.3rem; margin-bottom: 1rem;
+        }
+        .filter-tab {
+            padding: 0.4rem 0.8rem; border-radius: 8px;
+            font-size: 0.7rem; font-weight: 600; cursor: pointer;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            color: var(--text-secondary); transition: all 0.3s;
+        }
+        .filter-tab:hover { border-color: var(--primary); }
+        .filter-tab.active { background: rgba(6,214,160,0.2); border-color: var(--primary); color: var(--primary); }
+
+        /* Processing Overlay */
+        .processing-overlay {
+            position: fixed; inset: 0; background: rgba(3,7,30,0.97);
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .processing-overlay.active { display: flex; }
+        .loading-rings {
+            width: 100px; height: 100px; position: relative; margin-bottom: 2rem;
+        }
+        .loading-ring {
+            position: absolute; border-radius: 50%;
+            border: 3px solid transparent; animation: ringRotate 2s linear infinite;
+        }
+        .loading-ring:nth-child(1) {
+            inset: 0; border-top-color: var(--primary);
+        }
+        .loading-ring:nth-child(2) {
+            inset: 12px; border-right-color: var(--secondary);
+            animation-duration: 1.5s; animation-direction: reverse;
+        }
+        .loading-ring:nth-child(3) {
+            inset: 24px; border-bottom-color: var(--accent);
+            animation-duration: 1s;
+        }
+        @keyframes ringRotate { to { transform: rotate(360deg); } }
+        .proc-text { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .proc-stage { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; font-family: 'Space Mono', monospace; }
+        .proc-bar-outer { width: 280px; height: 5px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; }
+        .proc-bar-inner { height: 100%; background: var(--herd-gradient); width: 0%; transition: width 0.3s; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.85rem 1.25rem;
+            display: flex; align-items: center; gap: 0.6rem;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4,0,0.2,1); z-index: 1000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <div>
+                    <div class="logo-text">HerdInsight</div>
+                    <div class="logo-subtitle">CowManager Business Dashboard</div>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge live">Live Data</span>
+                <span class="badge">PowerBI Connected</span>
+                <span class="badge">12 Regions</span>
+                <span class="badge">48K+ Sensors</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="hero">
+            <h1>📈 Business Intelligence Dashboard</h1>
+            <p>Translating raw sensor data into actionable business KPIs — adoption, engagement, accuracy & retention</p>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" id="startBtn" onclick="toggleDashboard()">
+                <span id="startIcon">▶️</span>
+                <span id="startText">Launch Dashboard</span>
+            </button>
+            <button class="control-btn" onclick="refreshData()">🔄 Refresh Data</button>
+            <button class="control-btn" onclick="exportReport()">📄 Export Report</button>
+        </div>
+
+        <div class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-icon">🐄</div>
+                <div class="metric-label">Total Monitored Cows</div>
+                <div class="metric-value" id="mCows" style="color:var(--primary);">—</div>
+                <div class="metric-delta up" id="mCowsDelta">—</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">📡</div>
+                <div class="metric-label">Active Sensors Worldwide</div>
+                <div class="metric-value" id="mSensors" style="color:var(--secondary);">—</div>
+                <div class="metric-delta up" id="mSensorsDelta">—</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">🎯</div>
+                <div class="metric-label">Avg Alert Accuracy</div>
+                <div class="metric-value" id="mAccuracy" style="color:var(--accent);">—</div>
+                <div class="metric-delta up" id="mAccuracyDelta">—</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">🔄</div>
+                <div class="metric-label">Customer Retention</div>
+                <div class="metric-value" id="mRetention" style="color:var(--danger);">—</div>
+                <div class="metric-delta" id="mRetentionDelta">—</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Adoption Map -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🌍 Regional Sensor Adoption</h3>
+                    <span style="font-size:0.65rem;color:var(--text-muted);font-family:'Space Mono';">Q1 2026</span>
+                </div>
+                <div class="card-body">
+                    <div class="adoption-map" id="adoptionMap"></div>
+                </div>
+            </div>
+
+            <!-- Alert Accuracy by Module -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🎯 Alert Accuracy by Module</h3>
+                </div>
+                <div class="card-body">
+                    <div class="filter-tabs">
+                        <div class="filter-tab active" onclick="setFilter(this,'30d')">30 Days</div>
+                        <div class="filter-tab" onclick="setFilter(this,'90d')">90 Days</div>
+                        <div class="filter-tab" onclick="setFilter(this,'1y')">1 Year</div>
+                    </div>
+                    <div class="accuracy-bars" id="accuracyBars">
+                        <div class="accuracy-row">
+                            <span class="accuracy-label">🩺 Health</span>
+                            <div class="accuracy-track"><div class="accuracy-fill health" id="accHealth" style="width:0%">—</div></div>
+                        </div>
+                        <div class="accuracy-row">
+                            <span class="accuracy-label">💕 Fertility</span>
+                            <div class="accuracy-track"><div class="accuracy-fill fertility" id="accFertility" style="width:0%">—</div></div>
+                        </div>
+                        <div class="accuracy-row">
+                            <span class="accuracy-label">🌾 Nutrition</span>
+                            <div class="accuracy-track"><div class="accuracy-fill nutrition" id="accNutrition" style="width:0%">—</div></div>
+                        </div>
+                        <div class="accuracy-row">
+                            <span class="accuracy-label">🔄 Transition</span>
+                            <div class="accuracy-track"><div class="accuracy-fill transition" id="accTransition" style="width:0%">—</div></div>
+                        </div>
+                    </div>
+                    <div style="margin-top:1rem;background:var(--bg-elevated);border-radius:10px;padding:0.85rem;">
+                        <div style="font-size:0.7rem;font-weight:600;margin-bottom:0.5rem;">Clinical Outcome Validation</div>
+                        <div class="churn-grid">
+                            <div class="churn-card">
+                                <div class="churn-value" style="color:var(--success);" id="truePos">—</div>
+                                <div class="churn-label">True Positives</div>
+                            </div>
+                            <div class="churn-card">
+                                <div class="churn-value" style="color:var(--danger);" id="falsePos">—</div>
+                                <div class="churn-label">False Positives</div>
+                            </div>
+                            <div class="churn-card">
+                                <div class="churn-value" style="color:var(--secondary);" id="trueNeg">—</div>
+                                <div class="churn-label">True Negatives</div>
+                            </div>
+                            <div class="churn-card">
+                                <div class="churn-value" style="color:var(--warning);" id="falseNeg">—</div>
+                                <div class="churn-label">False Negatives</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Column -->
+            <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                <!-- Herd Size Distribution -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📏 Herd Size Distribution</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="distribution-container" id="distContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Churn Indicators -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⚠️ Churn Risk Indicators</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="churn-grid">
+                            <div class="churn-card">
+                                <div class="churn-value" style="color:var(--success);" id="churnLow">—</div>
+                                <div class="churn-label">Low Risk</div>
+                            </div>
+                            <div class="churn-card">
+                                <div class="churn-value" style="color:var(--accent);" id="churnMed">—</div>
+                                <div class="churn-label">Medium Risk</div>
+                            </div>
+                            <div class="churn-card">
+                                <div class="churn-value" style="color:var(--warning);" id="churnHigh">—</div>
+                                <div class="churn-label">High Risk</div>
+                            </div>
+                            <div class="churn-card">
+                                <div class="churn-value" style="color:var(--danger);" id="churnCrit">—</div>
+                                <div class="churn-label">Critical</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NPS Score -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⭐ NPS Score</h3>
+                    </div>
+                    <div class="card-body" style="text-align:center;">
+                        <div id="npsValue" style="font-size:3rem;font-weight:900;font-family:'Space Mono',monospace;color:var(--primary);">—</div>
+                        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.3rem;" id="npsLabel">Launch dashboard to calculate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Engagement Table -->
+        <div class="card" style="margin-top:1.25rem;">
+            <div class="card-header">
+                <h3 class="card-title">👥 Top Farms — Engagement & Retention</h3>
+                <span style="font-size:0.65rem;color:var(--text-muted);font-family:'Space Mono';" id="farmCount">—</span>
+            </div>
+            <div class="card-body">
+                <table class="engagement-table">
+                    <thead>
+                        <tr>
+                            <th>Farm</th>
+                            <th>Region</th>
+                            <th>Herd Size</th>
+                            <th>Sensors Active</th>
+                            <th>Daily Logins</th>
+                            <th>App Usage</th>
+                            <th>Retention</th>
+                        </tr>
+                    </thead>
+                    <tbody id="farmTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="loading-rings">
+            <div class="loading-ring"></div>
+            <div class="loading-ring"></div>
+            <div class="loading-ring"></div>
+        </div>
+        <div class="proc-text">Connecting to Databricks...</div>
+        <div class="proc-stage" id="procStage">Querying Delta Lake tables...</div>
+        <div class="proc-bar-outer"><div class="proc-bar-inner" id="procBar"></div></div>
+    </div>
+
+    <div class="toast" id="toast">
+        <span style="font-size:1.3rem;" id="toastIcon">✅</span>
+        <div>
+            <div style="font-size:0.85rem;font-weight:600;" id="toastTitle">Success</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);" id="toastMsg">Dashboard loaded</div>
+        </div>
+    </div>
+
+    <script>
+        let dashActive = false;
+        let dashInterval = null;
+
+        const regions = [
+            { flag: '🇳🇱', name: 'Netherlands', sensors: 12400 },
+            { flag: '🇺🇸', name: 'USA', sensors: 9800 },
+            { flag: '🇩🇪', name: 'Germany', sensors: 5200 },
+            { flag: '🇦🇺', name: 'Australia', sensors: 4100 },
+            { flag: '🇬🇧', name: 'UK', sensors: 3600 },
+            { flag: '🇨🇦', name: 'Canada', sensors: 3200 },
+            { flag: '🇫🇷', name: 'France', sensors: 2800 },
+            { flag: '🇮🇪', name: 'Ireland', sensors: 2400 },
+            { flag: '🇳🇿', name: 'New Zealand', sensors: 1900 },
+            { flag: '🇧🇪', name: 'Belgium', sensors: 1500 },
+            { flag: '🇩🇰', name: 'Denmark', sensors: 1200 },
+            { flag: '🇮🇹', name: 'Italy', sensors: 800 },
+        ];
+
+        const farms = [
+            { name: 'Bohnert Jerseys', region: 'USA', herd: 680, sensors: 680, logins: 14, usage: 92, retention: 'high' },
+            { name: 'Van der Berg Dairy', region: 'Netherlands', herd: 450, sensors: 448, logins: 22, usage: 97, retention: 'high' },
+            { name: 'Schweer Holsteins', region: 'USA', herd: 40, sensors: 40, logins: 8, usage: 85, retention: 'high' },
+            { name: 'Graham Farm NI', region: 'UK', herd: 320, sensors: 315, logins: 11, usage: 78, retention: 'medium' },
+            { name: 'Burleigh Dairy VIC', region: 'Australia', herd: 250, sensors: 250, logins: 18, usage: 94, retention: 'high' },
+            { name: 'Müller Milchhof', region: 'Germany', herd: 520, sensors: 510, logins: 9, usage: 71, retention: 'medium' },
+            { name: 'Ferme Dubois', region: 'France', herd: 180, sensors: 175, logins: 5, usage: 55, retention: 'low' },
+            { name: 'O\'Brien Agri', region: 'Ireland', herd: 380, sensors: 378, logins: 16, usage: 88, retention: 'high' },
+        ];
+
+        const herdDist = [
+            { label: '<50 cows', pct: 15, count: 1240, color: 'var(--primary)' },
+            { label: '50-200', pct: 28, count: 2310, color: 'var(--secondary)' },
+            { label: '200-500', pct: 32, count: 2640, color: 'var(--accent)' },
+            { label: '500-1K', pct: 18, count: 1485, color: 'var(--warning)' },
+            { label: '1K+', pct: 7, count: 578, color: 'var(--danger)' },
+        ];
+
+        function init() {
+            buildAdoptionMap();
+            buildDistribution();
+            buildFarmTable();
+        }
+
+        function buildAdoptionMap() {
+            const map = document.getElementById('adoptionMap');
+            let html = '';
+            regions.forEach(r => {
+                const growth = (Math.random() * 20 - 3).toFixed(1);
+                const barW = (r.sensors / 12400) * 100;
+                html += `<div class="region-cell">
+                    <div class="region-flag">${r.flag}</div>
+                    <div class="region-name">${r.name}</div>
+                    <div class="region-sensors">${(r.sensors/1000).toFixed(1)}K</div>
+                    <div class="region-growth ${growth > 0 ? 'up' : 'down'}">${growth > 0 ? '▲' : '▼'} ${Math.abs(growth)}%</div>
+                    <div class="region-bar" style="width:${barW}%;"></div>
+                </div>`;
+            });
+            map.innerHTML = html;
+        }
+
+        function buildDistribution() {
+            const container = document.getElementById('distContainer');
+            let html = '';
+            herdDist.forEach(d => {
+                html += `<div class="dist-row">
+                    <span class="dist-label">${d.label}</span>
+                    <div class="dist-bar"><div class="dist-fill" style="width:${d.pct}%;background:${d.color};">${d.pct}%</div></div>
+                    <span class="dist-count">${d.count.toLocaleString()}</span>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function buildFarmTable() {
+            const tbody = document.getElementById('farmTableBody');
+            let html = '';
+            farms.forEach(f => {
+                const usageColor = f.usage > 85 ? 'var(--success)' : f.usage > 60 ? 'var(--accent)' : 'var(--danger)';
+                html += `<tr>
+                    <td><span class="farm-name">${f.name}</span></td>
+                    <td>${f.region}</td>
+                    <td><span class="farm-size">${f.herd}</span></td>
+                    <td style="font-family:'Space Mono';font-size:0.7rem;">${f.sensors}/${f.herd}</td>
+                    <td style="font-family:'Space Mono';font-size:0.7rem;">${f.logins}/wk</td>
+                    <td><div class="usage-bar"><div class="usage-fill" style="width:${f.usage}%;background:${usageColor};"></div></div></td>
+                    <td><span class="retention-badge ${f.retention}">${f.retention.toUpperCase()}</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+            document.getElementById('farmCount').textContent = `${farms.length} farms shown`;
+        }
+
+        function toggleDashboard() {
+            if (!dashActive) startDashboard(); else stopDashboard();
+        }
+
+        function startDashboard() {
+            const overlay = document.getElementById('processingOverlay');
+            const bar = document.getElementById('procBar');
+            const stage = document.getElementById('procStage');
+            overlay.classList.add('active');
+            const stages = ['Querying Delta Lake tables...', 'Aggregating sensor telemetry...', 'Computing adoption metrics...', 'Building retention models...', 'Rendering visualizations...', 'Ready!'];
+            let p = 0, si = 0;
+            const iv = setInterval(() => {
+                p += Math.random() * 18 + 10; if (p > 100) p = 100;
+                bar.style.width = p + '%';
+                const ns = Math.floor((p/100)*stages.length);
+                if (ns !== si && ns < stages.length) { si = ns; stage.textContent = stages[si]; }
+                if (p >= 100) { clearInterval(iv); setTimeout(() => { overlay.classList.remove('active'); beginDashboard(); }, 300); }
+            }, 80);
+        }
+
+        function beginDashboard() {
+            dashActive = true;
+            document.getElementById('startIcon').textContent = '⏸️';
+            document.getElementById('startText').textContent = 'Pause Updates';
+            document.getElementById('startBtn').classList.add('active');
+            updateAll();
+            dashInterval = setInterval(updateAll, 2000);
+            showToast('✅', 'Dashboard Active', 'Real-time business data streaming');
+        }
+
+        function stopDashboard() {
+            dashActive = false;
+            document.getElementById('startIcon').textContent = '▶️';
+            document.getElementById('startText').textContent = 'Resume Dashboard';
+            document.getElementById('startBtn').classList.remove('active');
+            if (dashInterval) clearInterval(dashInterval);
+            showToast('⏸️', 'Paused', 'Dashboard updates suspended');
+        }
+
+        function updateAll() {
+            // Metrics
+            const cows = Math.floor(245000 + Math.random() * 5000);
+            document.getElementById('mCows').textContent = cows.toLocaleString();
+            document.getElementById('mCowsDelta').textContent = '▲ +3.2% vs last quarter';
+
+            const sensors = Math.floor(48000 + Math.random() * 2000);
+            document.getElementById('mSensors').textContent = sensors.toLocaleString();
+            document.getElementById('mSensorsDelta').textContent = '▲ +1,240 this month';
+
+            const acc = (91 + Math.random() * 5).toFixed(1);
+            document.getElementById('mAccuracy').textContent = acc + '%';
+            document.getElementById('mAccuracyDelta').textContent = '▲ +2.1pp vs baseline';
+
+            const ret = (88 + Math.random() * 6).toFixed(1);
+            document.getElementById('mRetention').textContent = ret + '%';
+            document.getElementById('mRetentionDelta').textContent = ret > 92 ? '▲ Above target' : '▼ Below 93% target';
+            document.getElementById('mRetentionDelta').className = `metric-delta ${ret > 92 ? 'up' : 'down'}`;
+
+            // Accuracy bars
+            const health = 89 + Math.random() * 7;
+            const fertility = 92 + Math.random() * 6;
+            const nutrition = 78 + Math.random() * 10;
+            const transition = 84 + Math.random() * 8;
+            animateBar('accHealth', health);
+            animateBar('accFertility', fertility);
+            animateBar('accNutrition', nutrition);
+            animateBar('accTransition', transition);
+
+            // Confusion matrix
+            document.getElementById('truePos').textContent = Math.floor(8400 + Math.random() * 500);
+            document.getElementById('falsePos').textContent = Math.floor(320 + Math.random() * 100);
+            document.getElementById('trueNeg').textContent = Math.floor(42000 + Math.random() * 2000);
+            document.getElementById('falseNeg').textContent = Math.floor(180 + Math.random() * 80);
+
+            // Churn
+            document.getElementById('churnLow').textContent = Math.floor(6200 + Math.random() * 300);
+            document.getElementById('churnMed').textContent = Math.floor(1400 + Math.random() * 200);
+            document.getElementById('churnHigh').textContent = Math.floor(340 + Math.random() * 80);
+            document.getElementById('churnCrit').textContent = Math.floor(45 + Math.random() * 20);
+
+            // NPS
+            const nps = Math.floor(62 + Math.random() * 12);
+            document.getElementById('npsValue').textContent = '+' + nps;
+            document.getElementById('npsLabel').textContent = nps > 70 ? 'Excellent — World-class' : 'Great — Above industry average';
+        }
+
+        function animateBar(id, value) {
+            const el = document.getElementById(id);
+            el.style.width = value + '%';
+            el.textContent = value.toFixed(1) + '%';
+        }
+
+        function setFilter(el, period) {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            if (dashActive) updateAll();
+        }
+
+        function refreshData() {
+            if (dashActive) { updateAll(); showToast('🔄', 'Refreshed', 'Data updated'); }
+            else showToast('⚠️', 'Not Active', 'Launch dashboard first');
+        }
+
+        function exportReport() {
+            showToast('📄', 'Report Exported', 'Q1 2026 Business Report → Downloads');
+        }
+
+        function showToast(icon, title, msg) {
+            document.getElementById('toastIcon').textContent = icon;
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMsg').textContent = msg;
+            document.getElementById('toast').classList.add('show');
+            setTimeout(() => document.getElementById('toast').classList.remove('show'), 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
